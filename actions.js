@@ -1,0 +1,56 @@
+const actions = [
+    // signup
+    "SIGNUP_SET_EMAIL",
+    "SIGNUP_SET_NAME",
+    "SIGNUP_SET_PASSWORD",
+
+    "SIGNUP_STARTED",
+    "SIGNUP_FAILED",
+    "SIGNUP_SUCCEEDED",
+
+    // signin
+    "SIGNIN_SET_EMAIL",
+    "SIGNIN_SET_PASSWORD",
+
+    "SIGNIN_STARTED",
+    "SIGNIN_FAILED",
+    "SIGNIN_SUCCEEDED",
+
+    "TOKEN_UPDATED",
+    "FETCH_CURRENT_USER_STARTED",
+    "FETCH_CURRENT_USER_FAILED",
+    "FETCH_CURRENT_USER_SUCCEEDED",
+    "HOME_UPDATE_CURRENT_TAB",
+
+    "HOME_FETCHING_FEEDS_STARTED",
+    "HOME_FETCHING_FEEDS_FAILED",
+    "HOME_FETCHING_FEEDS_SUCCEEDED",
+
+    "HOME_FETCHING_ARTICLES_STARTED",
+    "HOME_FETCHING_ARTICLES_FAILED",
+    "HOME_FETCHING_ARTICLES_SUCCEEDED",
+
+    "HOME_FETCHING_TAGS_STARTED",
+    "HOME_FETCHING_TAGS_FAILED",
+    "HOME_FETCHING_TAGS_SUCCEEDED",
+
+    "EDITOR_POST_ARTICLE_STARTED",
+    "EDITOR_POST_ARTICLE_FAILED",
+    "EDITOR_POST_ARTICLE_SUCCEEDED",
+
+    "FETCH_ARTICLE_STARTED",
+    "FETCH_ARTICLE_FAILED",
+    "FETCH_ARTICLE_SUCCEEDED",
+];
+
+const actionsObj = actions.reduce((acc, current) => {
+    acc[current] = current;
+
+    return acc;
+}, {});
+
+const error = name => {
+    throw Error(`NO SUCH ACTION: ${name}`);
+};
+
+export default name => actionsObj[name] || error(name);
