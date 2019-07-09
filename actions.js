@@ -41,6 +41,14 @@ const actions = [
     "FETCH_ARTICLE_STARTED",
     "FETCH_ARTICLE_FAILED",
     "FETCH_ARTICLE_SUCCEEDED",
+
+    "FETCH_COMMENTS_STARTED",
+    "FETCH_COMMENTS_FAILED",
+    "FETCH_COMMENTS_SUCCEEDED",
+
+    "FOLLOW_USER_STARTED",
+    "FOLLOW_USER_FAILED",
+    "FOLLOW_USER_SUCCEEDED",
 ];
 
 const actionsObj = actions.reduce((acc, current) => {

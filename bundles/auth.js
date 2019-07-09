@@ -15,6 +15,7 @@ export default {
         let initialState = {
             email: null,
             username: null,
+            image: null,
             token: getItem("token") || null,
             loading: false
         };
@@ -35,7 +36,8 @@ export default {
                     ...state,
                     loading: false,
                     email: payload.email,
-                    username: payload.username
+                    username: payload.username,
+                    image: payload.image
                 };
             } else if (type === FETCH_CURRENT_USER_FAILED) {
                 return {
@@ -83,6 +85,7 @@ export default {
     selectIsAuthorized: state => Boolean(state.auth.token),
     selectAuthToken: state => state.auth.token,
     selectUsername: state => state.auth.username,
+    selectUserImage: state => state.auth.image,
     selectIsLoading: state => state.auth.loading,
 
     reactShouldFetchUser: createSelector(

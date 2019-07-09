@@ -6,10 +6,15 @@
   "author": "sondo <son.do@gooddata.com>",
   "license": "MIT",
   "dependencies": {
+    "dayjs": "^1.8.15",
     "lodash": "^4.17.11",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "redux-bundler": "^25.0.0",
     "redux-bundler-react": "^1.1.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.0",
+    "@babel/plugin-transform-react-jsx": "^7.3.0"
   }
 }
