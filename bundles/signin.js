@@ -93,6 +93,8 @@ export default {
                     store.doUpdateToken(token);
 
                     dispatch({ type: SIGNIN_SUCCEEDED, payload: json.user });
+
+                    store.doUpdateUrl("/");
                 }
             })
             .catch(e => dispatch({ type: SIGNIN_FAILED }));
@@ -108,16 +110,6 @@ export default {
         "selectSigninPassword",
         (email, password) => {
             return email && password;
-        }
-    ),
-
-    reactGoHomeFromSignin: createSelector(
-        "selectIsAuthInProgress",
-        "selectIsAuthSucceeded",
-        (isAuthInProgress, isAuthSucceeded) => {
-            if (!isAuthInProgress && isAuthSucceeded) {
-                return { actionCreator: "doUpdateUrl", args: ["/"] };
-            }
         }
     )
 };

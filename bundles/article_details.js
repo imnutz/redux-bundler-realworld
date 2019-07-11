@@ -14,6 +14,16 @@ const FOLLOW_USER_STARTED = getAction("FOLLOW_USER_STARTED");
 const FOLLOW_USER_FAILED = getAction("FOLLOW_USER_FAILED");
 const FOLLOW_USER_SUCCEEDED = getAction("FOLLOW_USER_SUCCEEDED");
 
+const FAVORITE_ARTICLE_STARTED = getAction("FAVORITE_ARTICLE_STARTED");
+const FAVORITE_ARTICLE_FAILED = getAction("FAVORITE_ARTICLE_FAILED");
+const FAVORITE_ARTICLE_SUCCEEDED = getAction("FAVORITE_ARTICLE_SUCCEEDED");
+
+const UPDATE_USER_COMMENT = getAction("UPDATE_USER_COMMENT");
+
+const POST_COMMENT_SUCCEEDED = getAction("POST_COMMENT_SUCCEEDED");
+const POST_COMMENT_FAILED = getAction("POST_COMMENT_FAILED");
+const DELETE_COMMENT_SUCCEEDED = getAction("DELETE_COMMENT_SUCCEEDED");
+
 export default {
     name: "article",
     getReducer: () => {
@@ -21,7 +31,8 @@ export default {
             data: null,
             comments: null,
             loading: false,
-            fetchingComments: false
+            fetchingComments: false,
+            userComment: null
         };
 
         return (state = initialState, { payload, type }) => {
@@ -67,29 +78,58 @@ export default {
                         author: payload
                     }
                 };
+            } else if (type === FAVORITE_ARTICLE_SUCCEEDED) {
+                let data = state.data;
+                return {
+                    ...state,
+                    data: {
+                        ...data,
+                        favorited: payload.favorited,
+                        favoritesCount: payload.favoritesCount,
+                        updatedAt: payload.updatedAt
+                    }
+                };
+            } else if (type === UPDATE_USER_COMMENT) {
+                return {
+                    ...state,
+                    userComment: payload
+                };
+            } else if (type === POST_COMMENT_SUCCEEDED) {
+                const currentComments = state.comments;
+
+                return {
+                    ...state,
+                    comments: [payload, ...currentComments],
+                    userComment: null
+                };
+            } else if (type === DELETE_COMMENT_SUCCEEDED) {
+                let currentComments = state.comments;
+                const deletedId = payload;
+
+                currentComments = currentComments.filter(
+                    comment => comment.id !== deletedId
+                );
+
+                return {
+                    ...state,
+                    comments: currentComments
+                };
             }
+
             return state;
         };
     },
 
-    doFetchArticle: (slug, token) => ({ dispatch, apiEndpoint }) => {
+    doFetchArticle: (slug, token) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper
+    }) => {
         dispatch({ type: FETCH_ARTICLE_STARTED });
 
-        window
-            .fetch(`${apiEndpoint}/articles/${slug}`, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Token ${token}`
-                }
-            })
-            .then(response => {
-                const ok = response.ok;
-
-                if (!ok) {
-                    return dispatch({ type: FETCH_ARTICLE_FAILED });
-                }
-
-                return response.json();
+        fetchWrapper
+            .get(`${apiEndpoint}/articles/${slug}`, {
+                authToken: token
             })
             .then(json => {
                 dispatch({
@@ -100,24 +140,16 @@ export default {
             .catch(e => dispatch({ type: FETCH_ARTICLE_FAILED }));
     },
 
-    doFetchComments: (slug, token) => ({ dispatch, apiEndpoint }) => {
+    doFetchComments: (slug, token) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper
+    }) => {
         dispatch({ type: FETCH_COMMENTS_STARTED });
 
-        window
-            .fetch(`${apiEndpoint}/articles/${slug}/comments`, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Token ${token}`
-                }
-            })
-            .then(response => {
-                const ok = response.ok;
-
-                if (!ok) {
-                    return dispatch({ type: FETCH_COMMENTS_FAILED });
-                }
-
-                return response.json();
+        fetchWrapper
+            .get(`${apiEndpoint}/articles/${slug}/comments`, {
+                authToken: token
             })
             .then(json => {
                 dispatch({
@@ -125,34 +157,33 @@ export default {
                     payload: json.comments
                 });
             })
-            .catch(() => dispatch({ type: FETCH_COMMENTS_FAILED }));
+            .catch(e => {
+                dispatch({ type: FETCH_COMMENTS_FAILED });
+            });
     },
 
-    doFollowUser: (username, token, deleted) => ({ dispatch, apiEndpoint }) => {
-        let method = "POST";
-
-        if (deleted) {
-            method = "DELETE";
+    doFollowUser: (username, token, deleted) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper,
+        store
+    }) => {
+        if (!token) {
+            return store.doUpdateUrl("/signin");
         }
 
+        let promise,
+            url = `${apiEndpoint}/profiles/${username}/follow`;
+
         dispatch({ type: FOLLOW_USER_STARTED });
-        window
-            .fetch(`${apiEndpoint}/profiles/${username}/follow`, {
-                method,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Token ${token}`
-                }
-            })
-            .then(response => {
-                const ok = response.ok;
 
-                if (!ok) {
-                    return dispatch({ type: FOLLOW_USER_FAILED });
-                }
+        if (deleted) {
+            promise = fetchWrapper.delete(url, { body: "", authToken: token });
+        } else {
+            promise = fetchWrapper.post(url, { body: "", authToken: token });
+        }
 
-                return response.json();
-            })
+        promise
             .then(json => {
                 dispatch({
                     type: FOLLOW_USER_SUCCEEDED,
@@ -162,10 +193,99 @@ export default {
             .catch(() => dispatch({ type: FOLLOW_USER_FAILED }));
     },
 
-    doFavoriteArticle: slug => ({ dispatch, apiEndpoint }) => {},
+    doDeleteArticle: (slug, token) => ({
+        dispatch,
+        store,
+        apiEndpoint,
+        fetchWrapper
+    }) => {
+        fetchWrapper
+            .delete(`${apiEndpoint}/articles/${slug}`, { authToken: token })
+            .then(() => {
+                store.doUpdateUrl("/");
+            });
+    },
+
+    doFavoriteArticle: (slug, token, deleted) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper,
+        store
+    }) => {
+        if (!token) {
+            return store.doUpdateUrl("/signin");
+        }
+
+        let promise,
+            url = `${apiEndpoint}/articles/${slug}/favorite`;
+
+        let method = "POST";
+
+        if (deleted) {
+            promise = fetchWrapper.delete(url, { body: "", authToken: token });
+        } else {
+            promise = fetchWrapper.post(url, { body: "", authToken: token });
+        }
+
+        dispatch({ type: FAVORITE_ARTICLE_STARTED });
+        promise
+            .then(json => {
+                dispatch({
+                    type: FAVORITE_ARTICLE_SUCCEEDED,
+                    payload: json.article
+                });
+            })
+            .catch(() => dispatch({ type: FAVORITE_ARTICLE_FAILED }));
+    },
+
+    doPostComment: (slug, token) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper,
+        store
+    }) => {
+        const comment = store.selectUserComment();
+
+        if (comment) {
+            fetchWrapper
+                .post(`${apiEndpoint}/articles/${slug}/comments`, {
+                    body: JSON.stringify({ comment: { body: comment } }),
+                    authToken: token
+                })
+                .then(response => {
+                    dispatch({
+                        type: POST_COMMENT_SUCCEEDED,
+                        payload: response.comment
+                    });
+                })
+                .catch(e => dispatch({ type: POST_COMMENT_FAILED }));
+        }
+    },
+
+    doUpdateUserComment: value => ({ dispatch }) => {
+        dispatch({ type: UPDATE_USER_COMMENT, payload: value });
+    },
+
+    doDeleteUserComment: (slug, token, commentId) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper
+    }) => {
+        fetchWrapper
+            .delete(`${apiEndpoint}/articles/${slug}/comments/${commentId}`, {
+                authToken: token
+            })
+            .then(response => {
+                dispatch({
+                    type: DELETE_COMMENT_SUCCEEDED,
+                    payload: commentId
+                });
+            });
+    },
 
     selectArticleDetails: state => state.article.data,
     selectArticleComments: state => state.article.comments,
+    selectUserComment: state => state.article.userComment,
     selectIsFetchingArticleDetails: state => state.article.loading,
     selectIsFetchingComments: state => state.article.fetchingComments,
 
@@ -194,10 +314,7 @@ export default {
         (articleComments, isFetchingComments, authToken, routeParams) => {
             const { slug } = routeParams;
 
-            if (
-                !isFetchingComments &&
-                (!articleComments || !articleComments.length)
-            ) {
+            if (!isFetchingComments && !articleComments && slug) {
                 return {
                     actionCreator: "doFetchComments",
                     args: [slug, authToken]

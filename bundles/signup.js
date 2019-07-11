@@ -98,6 +98,7 @@ export default {
                     dispatch({ type: SIGNUP_FAILED, payload: json.errors });
                 } else {
                     dispatch({ type: SIGNUP_SUCCEEDED });
+                    store.doUpdateUrl("/");
                 }
             })
             .catch(e => {
@@ -122,15 +123,5 @@ export default {
     selectIsRegSucceeded: state => state.signup.succeeded,
     selectIsRegInProgress: state => {
         return state.signup.loading;
-    },
-
-    reactGoHomeFromSignup: createSelector(
-        "selectIsRegInProgress",
-        "selectIsRegSucceeded",
-        (isRegInProgress, isRegSucceeded) => {
-            if (!isRegInProgress && isRegSucceeded) {
-                return { actionCreator: "doUpdateUrl", args: ["/"] };
-            }
-        }
-    )
+    }
 };

@@ -49,6 +49,15 @@ const actions = [
     "FOLLOW_USER_STARTED",
     "FOLLOW_USER_FAILED",
     "FOLLOW_USER_SUCCEEDED",
+
+    "FAVORITE_ARTICLE_STARTED",
+    "FAVORITE_ARTICLE_FAILED",
+    "FAVORITE_ARTICLE_SUCCEEDED",
+
+    "UPDATE_USER_COMMENT",
+    "POST_COMMENT_SUCCEEDED",
+    "POST_COMMENT_FAILED",
+    "DELETE_COMMENT_SUCCEEDED"
 ];
 
 const actionsObj = actions.reduce((acc, current) => {
