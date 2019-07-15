@@ -48,7 +48,21 @@ const renderTagsLoading = () => {
     return <div>Loading tags...</div>;
 };
 
-const renderArticles = (articles = []) => {
+const renderArticleTags = (tags = []) => {
+    if (!tags || !tags.length) return <></>;
+
+    return (
+        <ul className="tag-list">
+            {tags.map(tag => (
+                <li className="tag-default tag-pill tag-outline" key={tag}>
+                    {tag}
+                </li>
+            ))}
+        </ul>
+    );
+};
+
+const renderArticles = (articles = [], token, doFavoriteHomeArticle) => {
     return articles.map(article => {
         return (
             <div className="article-preview" key={article.slug}>
@@ -57,20 +71,33 @@ const renderArticles = (articles = []) => {
                         <img src={article.author.image} alt="" />
                     </a>
                     <div className="info">
-                        <a href="" className="author">
+                        <a
+                            href={"/profile/" + article.author.username}
+                            className="author"
+                        >
                             {article.author.username}
                         </a>
                         <span className="date">{article.createAt}</span>
                     </div>
-                    <button className="btn btn-outline-primary btn-sm pull-xs-right">
+                    <button
+                        className="btn btn-outline-primary btn-sm pull-xs-right"
+                        onClick={evt => {
+                            doFavoriteHomeArticle(
+                                article.slug,
+                                token,
+                                article.favorited
+                            );
+                        }}
+                    >
                         <i className="ion-heart" />
                         &nbsp;{article.favoritesCount}
                     </button>
                 </div>
                 <a href={`/article/${article.slug}`} className="preview-link">
                     <h1>{article.title}</h1>
-                    <p>{article.body}</p>
+                    <p>{article.description}</p>
                     <span>Read more...</span>
+                    {renderArticleTags(article.tagList)}
                 </a>
             </div>
         );
@@ -98,22 +125,61 @@ const renderTagsList = (tags = [], doSelectTag) => {
     );
 };
 
+const renderPages = (numberOfPages = [], currentPage = 0, doUpdateCurrentPage) => {
+    const handler = (evt) => {
+        evt.preventDefault();
+
+        if (evt.target && evt.target.matches("a.page-link")) {
+            doUpdateCurrentPage(currentPage, Number(evt.target.textContent) - 1);
+        }
+    }
+    return (
+        <nav>
+            <ul className="pagination" onClick={handler}>
+                {numberOfPages.map(p => {
+                    const clazz = ["page-item"];
+
+                    if (p === currentPage) {
+                        clazz.push("active");
+                    }
+
+                    return (
+                        <li className={clazz.join(" ")} key={p}>
+                            <a href="#" className="page-link">{p + 1}</a>
+                        </li>
+                    );
+                })}
+            </ul>
+        </nav>
+    );
+};
+
 export default connect(
     "selectIsAuthorized",
     "selectSelectedTab",
     "selectTabsForPage",
     "selectArticles",
     "selectTags",
+    "selectAuthToken",
+    "selectPages",
+    "selectCurrentPage",
     "doUpdateCurrentTab",
     "doSelectTag",
+    "doFavoriteHomeArticle",
+    "doUpdateCurrentPage",
     ({
         isAuthorized,
         selectedTab,
         tabsForPage,
         articles = [],
         tags = [],
+        authToken,
+        pages,
+        currentPage,
         doUpdateCurrentTab,
-        doSelectTag
+        doSelectTag,
+        doFavoriteHomeArticle,
+        doUpdateCurrentPage
     }) => {
         return (
             <div className="home-page">
@@ -132,7 +198,13 @@ export default connect(
 
                             {!articles || !articles.length
                                 ? renderArticlesLoading()
-                                : renderArticles(articles)}
+                                : renderArticles(
+                                      articles,
+                                      authToken,
+                                      doFavoriteHomeArticle
+                                  )}
+
+                            {renderPages(pages, currentPage, doUpdateCurrentPage)}
                         </div>
 
                         <div className="col-md-3">

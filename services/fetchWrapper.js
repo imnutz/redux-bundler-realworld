@@ -19,11 +19,14 @@ const resolver = response => {
 const _fetch = (url, method, data) => {
     const { body = "", authToken } = data;
     let options = {
-        method,
-        headers: getHeaders(authToken)
+        method
     };
 
-    if (method !== "GET" && method !== "HEAD") {
+    if (authToken) {
+        options.headers = getHeaders(authToken);
+    }
+
+    if (method !== "GET" && method !== "HEAD" && body) {
         options.body = body;
     }
 
@@ -31,15 +34,24 @@ const _fetch = (url, method, data) => {
 };
 
 export default {
-    post(url, { body = "", authToken }) {
+    post(url, data = {}) {
+        const { body = "", authToken = "" } = data;
+
         return _fetch(url, "POST", { body, authToken });
     },
 
-    get(url, { authToken }) {
+    put(url, data = {}) {
+        const { body = "", authToken = "" } = data;
+        return _fetch(url, "PUT", { body, authToken });
+    },
+
+    get(url, data = {}) {
+        const { authToken = "" } = data;
         return _fetch(url, "GET", { authToken });
     },
 
-    delete(url, { body = "", authToken }) {
+    delete(url, data = {}) {
+        const { body = "", authToken = "" } = data;
         return _fetch(url, "DELETE", { body, authToken });
     }
 };

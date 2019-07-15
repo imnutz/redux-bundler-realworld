@@ -4,6 +4,8 @@ import Home from "../components/home";
 import SignUp from "../components/signup";
 import SignIn from "../components/signin";
 import Editor from "../components/editor";
+import Settings from "../components/settings";
+import Profile from "../components/profile";
 import ArticleDetails from "../components/article_details";
 
 export default createRouteBundle({
@@ -11,5 +13,8 @@ export default createRouteBundle({
     "/signup": SignUp,
     "/signin": SignIn,
     "/editor": Editor,
-    "/article/:slug": ArticleDetails
+    "/editor/:slug": Editor,
+    "/article/:slug": ArticleDetails,
+    "/settings": Settings,
+    "/profile/:username": Profile
 });

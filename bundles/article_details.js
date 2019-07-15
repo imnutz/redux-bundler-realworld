@@ -178,23 +178,24 @@ export default {
         dispatch({ type: FOLLOW_USER_STARTED });
 
         if (deleted) {
-            promise = fetchWrapper.delete(url, { body: "", authToken: token });
+            promise = fetchWrapper.delete(url, { authToken: token });
         } else {
-            promise = fetchWrapper.post(url, { body: "", authToken: token });
+            promise = fetchWrapper.post(url, { authToken: token });
         }
 
-        promise
+        return promise
             .then(json => {
                 dispatch({
                     type: FOLLOW_USER_SUCCEEDED,
                     payload: json.profile
                 });
+
+                return json.profile;
             })
             .catch(() => dispatch({ type: FOLLOW_USER_FAILED }));
     },
 
     doDeleteArticle: (slug, token) => ({
-        dispatch,
         store,
         apiEndpoint,
         fetchWrapper
@@ -219,21 +220,23 @@ export default {
         let promise,
             url = `${apiEndpoint}/articles/${slug}/favorite`;
 
-        let method = "POST";
-
         if (deleted) {
-            promise = fetchWrapper.delete(url, { body: "", authToken: token });
+            promise = fetchWrapper.delete(url, { authToken: token });
         } else {
-            promise = fetchWrapper.post(url, { body: "", authToken: token });
+            promise = fetchWrapper.post(url, { authToken: token });
         }
 
         dispatch({ type: FAVORITE_ARTICLE_STARTED });
-        promise
+        return promise
             .then(json => {
+                const { article } = json;
+
                 dispatch({
                     type: FAVORITE_ARTICLE_SUCCEEDED,
-                    payload: json.article
+                    payload: article
                 });
+
+                return article;
             })
             .catch(() => dispatch({ type: FAVORITE_ARTICLE_FAILED }));
     },
@@ -291,13 +294,25 @@ export default {
 
     reactShouldFetchArticle: createSelector(
         "selectRouteParams",
+        "selectPathname",
         "selectArticleDetails",
         "selectIsFetchingArticleDetails",
         "selectAuthToken",
-        (routeParams, articleDetails, isFetchingArticleDetails, authToken) => {
+        (
+            routeParams,
+            pathname,
+            articleDetails,
+            isFetchingArticleDetails,
+            authToken
+        ) => {
             const { slug } = routeParams;
 
-            if (!isFetchingArticleDetails && !articleDetails && slug) {
+            if (
+                !isFetchingArticleDetails &&
+                !articleDetails &&
+                slug &&
+                /^\/article/i.test(pathname)
+            ) {
                 return {
                     actionCreator: "doFetchArticle",
                     args: [slug, authToken]
@@ -311,10 +326,22 @@ export default {
         "selectIsFetchingComments",
         "selectAuthToken",
         "selectRouteParams",
-        (articleComments, isFetchingComments, authToken, routeParams) => {
+        "selectPathname",
+        (
+            articleComments,
+            isFetchingComments,
+            authToken,
+            routeParams,
+            pathname
+        ) => {
             const { slug } = routeParams;
 
-            if (!isFetchingComments && !articleComments && slug) {
+            if (
+                !isFetchingComments &&
+                !articleComments &&
+                slug &&
+                /^\/article/i.test(pathname)
+            ) {
                 return {
                     actionCreator: "doFetchComments",
                     args: [slug, authToken]

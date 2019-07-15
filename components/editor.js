@@ -3,39 +3,38 @@ import * as React from "react";
 import { connect } from "redux-bundler-react";
 
 export default connect(
+    "selectArticleTitle",
+    "selectShortDescription",
+    "selectArticleBody",
+    "selectArticleTags",
     "doPostArticle",
-    class extends React.Component {
-        constructor(props) {
-            super(props);
-
-            this.state = {
-                title: null,
-                shortDesc: null,
-                body: null,
-                tags: null
-            };
-        }
-
-        handlePostArticle(evt) {
-            evt.preventDefault();
-
-            const postArticle = this.props.doPostArticle;
-            const {
-                title,
-                shortDesc,
-                body,
-                tags
-            } = this.state;
-
-            postArticle(title, shortDesc, body, tags);
-        }
-
-        render() {
-            return (
-                <div className="editor-page">
-                    <div className="container page">
-                        <div className="row">
-                            <div className="col-md-10 offset-md-1 col-xs-12">
+    "doUpdateArticleTitle",
+    "doUpdateShortDescription",
+    "doUpdateArticleBody",
+    "doUpdateArticleTags",
+    "selectIsEditorLoading",
+    "selectIsEditingArticle",
+    ({
+        articleTitle,
+        shortDescription,
+        articleBody,
+        articleTags,
+        doPostArticle,
+        doUpdateArticleTitle,
+        doUpdateShortDescription,
+        doUpdateArticleBody,
+        doUpdateArticleTags,
+        isEditorLoading,
+        isEditingArticle
+    }) => {
+        return (
+            <div className="editor-page">
+                <div className="container page">
+                    <div className="row">
+                        <div className="col-md-10 offset-md-1 col-xs-12">
+                            {isEditorLoading ? (
+                                "loading..."
+                            ) : (
                                 <form>
                                     <fieldset>
                                         <fieldset className="form-group">
@@ -43,10 +42,11 @@ export default connect(
                                                 type="text"
                                                 className="form-control form-control-lg"
                                                 placeholder="Article Title"
+                                                value={articleTitle || ""}
                                                 onChange={evt =>
-                                                    this.setState({
-                                                        title: evt.target.value
-                                                    })
+                                                    doUpdateArticleTitle(
+                                                        evt.target.value
+                                                    )
                                                 }
                                             />
                                         </fieldset>
@@ -55,11 +55,11 @@ export default connect(
                                                 type="text"
                                                 className="form-control"
                                                 placeholder="What's this article about?"
+                                                value={shortDescription || ""}
                                                 onChange={evt =>
-                                                    this.setState({
-                                                        shortDesc:
-                                                            evt.target.value
-                                                    })
+                                                    doUpdateShortDescription(
+                                                        evt.target.value
+                                                    )
                                                 }
                                             />
                                         </fieldset>
@@ -68,10 +68,11 @@ export default connect(
                                                 className="form-control"
                                                 rows="8"
                                                 placeholder="Write your article (in markdown)"
+                                                value={articleBody || ""}
                                                 onChange={evt =>
-                                                    this.setState({
-                                                        body: evt.target.value
-                                                    })
+                                                    doUpdateArticleBody(
+                                                        evt.target.value
+                                                    )
                                                 }
                                             />
                                         </fieldset>
@@ -80,10 +81,11 @@ export default connect(
                                                 type="text"
                                                 className="form-control"
                                                 placeholder="Enter tags"
+                                                value={articleTags || ""}
                                                 onChange={evt =>
-                                                    this.setState({
-                                                        tags: evt.target.value
-                                                    })
+                                                    doUpdateArticleTags(
+                                                        evt.target.value
+                                                    )
                                                 }
                                             />
                                             <div className="tag-list" />
@@ -91,17 +93,27 @@ export default connect(
                                         <button
                                             className="btn btn-lg pull-xs-right btn-primary"
                                             type="button"
-                                            onClick={this.handlePostArticle.bind(this)}
+                                            onClick={evt => {
+                                                evt.preventDefault();
+
+                                                doPostArticle(
+                                                    articleTitle,
+                                                    shortDescription,
+                                                    articleBody,
+                                                    articleTags,
+                                                    isEditingArticle
+                                                );
+                                            }}
                                         >
                                             Publish Article
                                         </button>
                                     </fieldset>
                                 </form>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            );
-        }
+            </div>
+        );
     }
 );

@@ -1,12 +1,15 @@
 import { createSelector } from "redux-bundler";
 
 import getAction from "../actions";
-import { getItem, setItem } from "../services/localstorage";
+import { getItem, setItem, removeItem } from "../services/localstorage";
+
+const TOKEN_KEY = "token";
 
 const TOKEN_UPDATED = getAction("TOKEN_UPDATED");
 const FETCH_CURRENT_USER_STARTED = getAction("FETCH_CURRENT_USER_STARTED");
 const FETCH_CURRENT_USER_FAILED = getAction("FETCH_CURRENT_USER_FAILED");
 const FETCH_CURRENT_USER_SUCCEEDED = getAction("FETCH_CURRENT_USER_SUCCEEDED");
+const SIGNOUT_SUCCEEDED = getAction("SIGNOUT_SUCCEEDED");
 
 export default {
     name: "auth",
@@ -16,7 +19,8 @@ export default {
             email: null,
             username: null,
             image: null,
-            token: getItem("token") || null,
+            token: getItem(TOKEN_KEY) || null,
+            bio: null,
             loading: false
         };
 
@@ -37,12 +41,22 @@ export default {
                     loading: false,
                     email: payload.email,
                     username: payload.username,
-                    image: payload.image
+                    image: payload.image,
+                    bio: payload.bio
                 };
             } else if (type === FETCH_CURRENT_USER_FAILED) {
                 return {
                     ...state,
                     loading: false
+                };
+            } else if (type === SIGNOUT_SUCCEEDED) {
+                return {
+                    ...state,
+                    token: null,
+                    username: null,
+                    email: null,
+                    image: null,
+                    bio: null
                 };
             }
             return state;
@@ -50,28 +64,24 @@ export default {
     },
 
     doUpdateToken: token => ({ dispatch }) => {
-        setItem("token", token);
+        setItem(TOKEN_KEY, token);
 
         dispatch({ type: TOKEN_UPDATED, payload: token });
     },
 
-    doFetchCurrentUser: token => ({ dispatch, apiEndpoint }) => {
+    doSignOut: () => ({ dispatch, store }) => {
+        removeItem(TOKEN_KEY);
+
+        dispatch({ type: SIGNOUT_SUCCEEDED });
+
+        store.doUpdateUrl("/");
+    },
+
+    doFetchCurrentUser: token => ({ dispatch, apiEndpoint, fetchWrapper }) => {
         dispatch({ type: FETCH_CURRENT_USER_STARTED });
-        window
-            .fetch(`${apiEndpoint}/user`, {
-                headers: {
-                    Authorization: `Token ${token}`,
-                    "Content-Type": "application/json"
-                }
-            })
-            .then(response => {
-                const ok = response.ok;
-
-                if (!ok) {
-                    dispatch({ FETCH_CURRENT_USER_FAILED });
-                }
-
-                return response.json();
+        fetchWrapper
+            .get(`${apiEndpoint}/user`, {
+                authToken: token
             })
             .then(json => {
                 dispatch({
@@ -86,14 +96,23 @@ export default {
     selectAuthToken: state => state.auth.token,
     selectUsername: state => state.auth.username,
     selectUserImage: state => state.auth.image,
-    selectIsLoading: state => state.auth.loading,
+    selectUserBio: state => state.auth.bio,
+    selectUserEmail: state => state.auth.email,
+    selectIsLoadingCurrentUser: state => state.auth.loading,
+
+    selectIsSignedIn: createSelector(
+        "selectAuthToken",
+        authToken => {
+            return authToken;
+        }
+    ),
 
     reactShouldFetchUser: createSelector(
-        "selectIsLoading",
+        "selectIsLoadingCurrentUser",
         "selectAuthToken",
         "selectUsername",
-        (isLoading, token, username) => {
-            if (!isLoading && token && !username) {
+        (isLoadingCurrentUser, token, username) => {
+            if (!isLoadingCurrentUser && token && !username) {
                 return { actionCreator: "doFetchCurrentUser", args: [token] };
             }
         }
