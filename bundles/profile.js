@@ -87,6 +87,7 @@ export default {
                     selectedTab: payload,
                     articles: null,
                     articlesCount: 0,
+                    currentPage: 0,
                     fetchingMore: false,
                     loading: false
                 };
