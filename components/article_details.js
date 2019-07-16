@@ -95,10 +95,13 @@ const renderComments = (
         if (isOwner(username, comment.author.username)) {
             return (
                 <span className="mod-options">
-                    <i className="ion-trash-a" onClick={evt => {
-                        evt.preventDefault();
-                        doDeleteUserComment(slug, token, comment.id);
-                    }} />
+                    <i
+                        className="ion-trash-a"
+                        onClick={evt => {
+                            evt.preventDefault();
+                            doDeleteUserComment(slug, token, comment.id);
+                        }}
+                    />
                 </span>
             );
         }
@@ -206,8 +209,17 @@ export default connect(
         doUpdateUserComment,
         doDeleteUserComment
     }) => {
-        if (!articleDetails || !articleComments)
-            return <div className="article-page">loading...</div>;
+        if (!articleDetails || !articleComments) {
+            return (
+                <div className="article-page">
+                    <div className="container page">
+                        <div className="row article-content">
+                            <div className="col-md-12">loading...</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div className="article-page">

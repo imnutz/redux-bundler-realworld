@@ -130,7 +130,6 @@ export default {
                     articles: [...currentArticles]
                 };
             } else if (type === HOME_UPDATE_PAGINATION_PAGE) {
-
                 let result = {
                     ...state,
                     currentPage: payload.newPage,
@@ -161,14 +160,21 @@ export default {
         store.doUpdateCurrentTab({ id: "#" + tag });
     },
 
-    doFetchFeeds: (token, currentPage) => ({ dispatch, apiEndpoint, fetchWrapper }) => {
+    doFetchFeeds: (token, currentPage) => ({
+        dispatch,
+        apiEndpoint,
+        fetchWrapper
+    }) => {
         dispatch({ type: HOME_FETCHING_FEEDS_STARTED });
 
         const offset = currentPage * ITEMS_PER_PAGE;
         fetchWrapper
-            .get(`${apiEndpoint}/articles/feed?limit=${ITEMS_PER_PAGE}&offset=${offset}`, {
-                authToken: token
-            })
+            .get(
+                `${apiEndpoint}/articles/feed?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
+                {
+                    authToken: token
+                }
+            )
             .then(json => {
                 dispatch({
                     type: HOME_FETCHING_FEEDS_SUCCEEDED,
@@ -248,10 +254,46 @@ export default {
     selectIsFetchingYourFeeds: state => state.home.fetchingYourFeeds,
     selectIsFetchingGlobalFeeds: state => state.home.fetchingGlobalFeeds,
     selectIsFetchingTags: state => state.home.fetchingTags,
-    selectIsFetchingForTag: state => state.home.fetchingForTag,
     selectArticlesCount: state => state.home.articlesCount,
     selectCurrentPage: state => state.home.currentPage,
     selectIsFetchingMore: state => state.home.fetchingMore,
+
+    selectIsFetchingForTag: createSelector(
+        "selectIsHomePage",
+        "selectSelectedTab",
+        "selectIsFetchingGlobalFeeds",
+        (isHomePage, selectedTab, isFetchingGlobalFeeds) => {
+            const isTag = /^#/i.test(selectedTab);
+
+            return isHomePage && !isFetchingGlobalFeeds && isTag;
+        }
+    ),
+
+    selectShouldFetchGlobalFeeds: createSelector(
+        "selectIsFetchingGlobalFeeds",
+        "selectSelectedTab",
+        "selectIsHomePage",
+        (isFetchingGlobalFeeds, selectedTab, isHomePage) => {
+            return (
+                selectedTab === "global_feed" &&
+                !isFetchingGlobalFeeds &&
+                isHomePage
+            );
+        }
+    ),
+
+    selectShouldFetchYourFeeds: createSelector(
+        "selectIsFetchingYourFeeds",
+        "selectSelectedTab",
+        "selectIsHomePage",
+        (isFetchingYourFeeds, selectedTab, isHomePage) => {
+            return (
+                selectedTab === "your_feed" &&
+                !isFetchingYourFeeds &&
+                isHomePage
+            );
+        }
+    ),
 
     selectPages: createSelector(
         "selectArticlesCount",
@@ -321,28 +363,21 @@ export default {
     ),
 
     reactShouldFetchYourFeeds: createSelector(
-        "selectIsFetchingYourFeeds",
-        "selectSelectedTab",
+        "selectShouldFetchYourFeeds",
         "selectArticles",
         "selectAuthToken",
-        "selectIsHomePage",
         "selectCurrentPage",
         "selectIsFetchingMore",
         (
-            isFetchingYourFeeds,
-            selectedTab,
+            shouldFetchYourFeeds,
             articles,
             token,
-            isHomePage,
             currentPage,
             isFetchingMore
         ) => {
             if (
-                (isHomePage &&
-                    selectedTab === "your_feed" &&
-                    !articles &&
-                    !isFetchingYourFeeds) ||
-                (isFetchingMore && isHomePage && selectedTab === "your_feed" && !isFetchingYourFeeds)
+                (shouldFetchYourFeeds && !articles) ||
+                (isFetchingMore && shouldFetchYourFeeds)
             ) {
                 return {
                     actionCreator: "doFetchFeeds",
@@ -353,29 +388,14 @@ export default {
     ),
 
     reactShouldFetchGlobalFeeds: createSelector(
-        "selectIsFetchingGlobalFeeds",
+        "selectShouldFetchGlobalFeeds",
         "selectArticles",
-        "selectSelectedTab",
-        "selectIsHomePage",
         "selectCurrentPage",
         "selectIsFetchingMore",
-        (
-            isFetchingGlobalFeeds,
-            articles,
-            selectedTab,
-            isHomePage,
-            currentPage,
-            isFetchingMore
-        ) => {
+        (shouldFetchGlobalFeeds, articles, currentPage, isFetchingMore) => {
             if (
-                (isHomePage &&
-                    selectedTab === "global_feed" &&
-                    !articles &&
-                    !isFetchingGlobalFeeds) ||
-                (selectedTab === "global_feed" &&
-                    isFetchingMore &&
-                    isHomePage &&
-                    !isFetchingGlobalFeeds)
+                (!articles && shouldFetchGlobalFeeds) ||
+                (isFetchingMore && shouldFetchGlobalFeeds)
             ) {
                 return {
                     actionCreator: "doFetchArticles",
@@ -397,24 +417,21 @@ export default {
     ),
 
     reactShouldFetchArticlesForTag: createSelector(
-        "selectIsFetchingGlobalFeeds",
-        "selectSelectedTab",
+        "selectIsFetchingForTag",
         "selectArticles",
-        "selectIsHomePage",
         "selectCurrentPage",
         "selectIsFetchingMore",
+        "selectSelectedTab",
         (
-            isFetchingGlobalFeeds,
-            selectedTab,
+            isFetchingForTag,
             articles,
-            isHomePage,
             currentPage,
-            isFetchingMore
+            isFetchingMore,
+            selectedTab
         ) => {
-            const isTag = /^#/.test(selectedTab);
             if (
-                (isHomePage && !isFetchingGlobalFeeds && isTag && !articles) ||
-                (isFetchingMore && isTag && !isFetchingGlobalFeeds && isHomePage)
+                (isFetchingForTag && !articles) ||
+                (isFetchingMore && isFetchingForTag)
             ) {
                 return {
                     actionCreator: "doFetchArticles",

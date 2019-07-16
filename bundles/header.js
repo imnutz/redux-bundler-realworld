@@ -67,5 +67,37 @@ export default {
         }
     ),
 
+    selectHeaderCurrentPage: createSelector(
+        "selectPathname",
+        "selectNavigationItems",
+        (pathname, navigation) => {
+            if (pathname === "/") {
+                return navigation["home"];
+            }
+
+            if (pathname.startsWith("/signin")) {
+                return navigation["signin"];
+            }
+
+            if (pathname.startsWith("/signup")) {
+                return navigation["signup"];
+            }
+
+            if (pathname.startsWith("/editor")) {
+                return navigation["newpost"];
+            }
+
+            if (pathname.startsWith("/settings")) {
+                return navigation["settings"];
+            }
+
+            if (pathname.startsWith("/profile")) {
+                return {
+                    link: decodeURIComponent(pathname)
+                };
+            }
+        }
+    ),
+
     selectAppName: state => state.header.appName
 };

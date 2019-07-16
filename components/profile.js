@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { connect } from "redux-bundler-react";
-import auth from "../bundles/auth";
 
 const renderButtons = (
     isCurrentUser,
@@ -116,14 +115,21 @@ const renderTabs = (tabs = [], selectedTab, doUpdateProfileSelectedTab) => {
     );
 };
 
-const renderPagination = (numberOfPages = [], currentPage = 0, doUpdateProfileCurrentPage) => {
-    const handler = (evt) => {
+const renderPagination = (
+    numberOfPages = [],
+    currentPage = 0,
+    doUpdateProfileCurrentPage
+) => {
+    const handler = evt => {
         evt.preventDefault();
 
         if (evt.target && evt.target.matches("a.page-link")) {
-            doUpdateProfileCurrentPage(currentPage, Number(evt.target.textContent) - 1);
+            doUpdateProfileCurrentPage(
+                currentPage,
+                Number(evt.target.textContent) - 1
+            );
         }
-    }
+    };
     return (
         <nav>
             <ul className="pagination" onClick={handler}>
@@ -174,8 +180,14 @@ export default connect(
         doFollowProfile,
         doUpdateProfileCurrentPage
     }) => {
-        if (!userProfile) return <>loading...</>;
-
+        if (!userProfile)
+            return (
+                <div className="container">
+                    <div className="row">
+                        <div className="col-xs-12 col-md-10 offset-md-1">loading...</div>
+                    </div>
+                </div>
+            );
         return (
             <div className="profile-page">
                 <div className="user-info">

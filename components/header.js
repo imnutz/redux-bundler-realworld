@@ -1,46 +1,49 @@
 import * as React from "react";
 import { connect } from "redux-bundler-react";
 
-const createBrand = (appName) => <a className="navbar-brand" href="/">{appName}</a>
-const createNavItem = (item) => {
-    const {
-        iconClass,
-        name,
-        link
-    } = item;
+const createBrand = appName => (
+    <a className="navbar-brand" href="/">
+        {appName}
+    </a>
+);
+
+const createNavItem = (currentPage = {}, item) => {
+    const { iconClass, name, link } = item;
+
+    let clazz = ["nav-link"];
+    if (currentPage.link === item.link) {
+        clazz.push("active");
+    }
 
     return (
         <li className="nav-item" key={name}>
-            <a className="nav-link" href={link}>
-                {
-                    !iconClass ? null : (
-                        <i className={iconClass} />
-                    )
-                }
+            <a className={clazz.join(" ")} href={link}>
+                {!iconClass ? null : <i className={iconClass} />}
 
                 {name}
             </a>
         </li>
     );
-}
+};
 
-const createNav = (navItems) => {
+const createNav = (navItems, headerCurrentPage) => {
     return (
         <ul className="nav navbar-nav pull-xs-right">
-            { navItems.map(createNavItem) }
+            {navItems.map(createNavItem.bind(null, headerCurrentPage))}
         </ul>
-    )
-}
+    );
+};
 
 export default connect(
     "selectNavigation",
     "selectAppName",
-    ({ navigation, appName }) => {
+    "selectHeaderCurrentPage",
+    ({ navigation, appName, headerCurrentPage }) => {
         return (
             <nav className="navbar navbar-light">
                 <div className="container">
-                    { createBrand(appName) }
-                    { createNav( navigation) }
+                    {createBrand(appName)}
+                    {createNav(navigation, headerCurrentPage)}
                 </div>
             </nav>
         );
