@@ -2,8 +2,6 @@ import { createSelector } from "redux-bundler";
 
 import getAction from "../actions";
 
-import cloneDeep from "lodash";
-
 const HOME_UPDATE_CURRENT_TAB = getAction("HOME_UPDATE_CURRENT_TAB");
 const HOME_FETCHING_FEEDS_STARTED = getAction("HOME_FETCHING_FEEDS_STARTED");
 const HOME_FETCHING_FEEDS_FAILED = getAction("HOME_FETCHING_FEEDS_FAILED");
@@ -141,6 +139,7 @@ export default {
 
                 if (payload.reset) {
                     result.articles = null;
+                    result.articlesCount = 0;
                 }
 
                 return result;

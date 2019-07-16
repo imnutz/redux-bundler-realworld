@@ -29,6 +29,11 @@ const PROFILE_UPDATE_FAVORITE_STATS = getAction(
 const PROFILE_UPDATE_FOLLOWING_STATS = getAction(
     "PROFILE_UPDATE_FOLLOWING_STATS"
 );
+
+const PROFILE_UPDATE_CURRENT_PAGE = getAction("PROFILE_UPDATE_CURRENT_PAGE");
+
+const ITEMS_PER_PAGE = 5;
+
 export default {
     name: "profile",
 
@@ -36,8 +41,11 @@ export default {
         let initialState = {
             profile: null,
             articles: null,
+            articlesCount: 0,
+            currentPage: 0,
             loading: false,
             fetchingProfile: false,
+            fetchingMore: false,
             tabs: {
                 myArticles: {
                     name: "My Articles",
@@ -60,19 +68,27 @@ export default {
             } else if (type === PROFILE_FETCH_ARTICLES_FAILED) {
                 return {
                     ...state,
-                    loading: false
+                    loading: false,
+                    fetchingMore: false
                 };
             } else if (type === PROFILE_FETCH_ARTICLES_SUCCEEDED) {
+                const currentArticles = state.articles || [];
+
                 return {
                     ...state,
-                    articles: [...payload],
+                    articles: [...currentArticles, ...payload.articles],
+                    articlesCount: payload.articlesCount,
+                    fetchingMore: false,
                     loading: false
                 };
             } else if (type === PROFILE_UPDATE_SELECTED_TAB) {
                 return {
                     ...state,
                     selectedTab: payload,
-                    articles: null
+                    articles: null,
+                    articlesCount: 0,
+                    fetchingMore: false,
+                    loading: false
                 };
             } else if (type === PROFILE_FETCH_PROFILE_STARTED) {
                 return {
@@ -119,6 +135,19 @@ export default {
                         following: payload.following
                     }
                 };
+            } else if (type === PROFILE_UPDATE_CURRENT_PAGE) {
+                const result = {
+                    ...state,
+                    currentPage: payload.newPage,
+                    fetchingMore: true
+                };
+
+                if (payload.reset) {
+                    result.articles = null;
+                    result.articlesCount = 0;
+                }
+
+                return result;
             }
 
             return state;
@@ -133,6 +162,9 @@ export default {
     selectProfileTabsAsArray: state => Object.values(state.profile.tabs),
     selectUserProfile: state => state.profile.profile,
     selectIsFetchingProfile: state => state.profile.fetchingProfile,
+    selectProfileArticlesCount: state => state.profile.articlesCount,
+    selectProfileArticleCurrentPage: state => state.profile.currentPage,
+    selectIsFetchingMoreProfileArticles: state => state.profile.fetchingMore,
 
     selectIsProfilePage: createSelector(
         "selectRouteParams",
@@ -141,6 +173,20 @@ export default {
             const { username } = routeParams;
 
             return REG.test(pathname) && username;
+        }
+    ),
+
+    selectProfileArticlePages: createSelector(
+        "selectProfileArticlesCount",
+        profileArticlesCount => {
+            if (profileArticlesCount <= ITEMS_PER_PAGE) return [];
+
+            const pages = Math.min(
+                50,
+                Math.ceil(profileArticlesCount / ITEMS_PER_PAGE)
+            );
+
+            return [...Array(pages).keys()];
         }
     ),
 
@@ -162,6 +208,15 @@ export default {
         }
     ),
 
+    doUpdateProfileCurrentPage: (currentPage, newPage) => ({ dispatch }) => {
+        if (currentPage !== newPage) {
+            dispatch({
+                type: PROFILE_UPDATE_CURRENT_PAGE,
+                payload: { newPage, reset: newPage < currentPage }
+            });
+        }
+    },
+
     doUpdateProfileSelectedTab: (currentSelectedTab, tabId) => ({
         dispatch
     }) => {
@@ -170,15 +225,17 @@ export default {
         }
     },
 
-    doFetchMyArticles: (username, token) => ({
+    doFetchMyArticles: (username, token, page) => ({
         dispatch,
         apiEndpoint,
         fetchWrapper
     }) => {
         dispatch({ type: PROFILE_FETCH_ARTICLES_STARTED });
+
+        const offset = page * ITEMS_PER_PAGE;
         fetchWrapper
             .get(
-                `${apiEndpoint}/articles?author=${username}&limit=5&offset=0`,
+                `${apiEndpoint}/articles?author=${username}&limit=${ITEMS_PER_PAGE}&offset=${offset}`,
                 {
                     authToken: token
                 }
@@ -186,21 +243,23 @@ export default {
             .then(response => {
                 dispatch({
                     type: PROFILE_FETCH_ARTICLES_SUCCEEDED,
-                    payload: response.articles
+                    payload: response
                 });
             })
             .catch(e => dispatch({ type: PROFILE_FETCH_ARTICLES_FAILED }));
     },
 
-    doFetchFavoritedArticles: (username, token) => ({
+    doFetchFavoritedArticles: (username, token, page) => ({
         dispatch,
         apiEndpoint,
         fetchWrapper
     }) => {
         dispatch({ type: PROFILE_FETCH_ARTICLES_STARTED });
+
+        const offset = page * ITEMS_PER_PAGE;
         fetchWrapper
             .get(
-                `${apiEndpoint}/articles?favorited=${username}&limit=5&offset=0`,
+                `${apiEndpoint}/articles?favorited=${username}&limit=${ITEMS_PER_PAGE}&offset=${offset}`,
                 {
                     authToken: token
                 }
@@ -208,7 +267,7 @@ export default {
             .then(response => {
                 dispatch({
                     type: PROFILE_FETCH_ARTICLES_SUCCEEDED,
-                    payload: response.articles
+                    payload: response
                 });
             })
             .catch(e => dispatch({ type: PROFILE_FETCH_ARTICLES_FAILED }));
@@ -257,6 +316,8 @@ export default {
         "selectProfileTabs",
         "selectAuthToken",
         "selectRouteParams",
+        "selectIsFetchingMoreProfileArticles",
+        "selectProfileArticleCurrentPage",
         (
             isProfilePage,
             profileArticles,
@@ -264,24 +325,29 @@ export default {
             profileSelectedTab,
             profileTabs,
             authToken,
-            routeParams
+            routeParams,
+            isFetchingMoreProfileArticles,
+            profileArticleCurrentPage
         ) => {
             if (
-                isProfilePage &&
-                !profileArticles &&
-                !isFetchingProfileArticles
+                (isProfilePage &&
+                    !profileArticles &&
+                    !isFetchingProfileArticles) ||
+                (isFetchingMoreProfileArticles &&
+                    isProfilePage &&
+                    !isFetchingProfileArticles)
             ) {
                 const { username } = routeParams;
 
                 if (profileSelectedTab === profileTabs.myArticles.id) {
                     return {
                         actionCreator: "doFetchMyArticles",
-                        args: [username, authToken]
+                        args: [username, authToken, profileArticleCurrentPage]
                     };
                 } else {
                     return {
                         actionCreator: "doFetchFavoritedArticles",
-                        args: [username, authToken]
+                        args: [username, authToken, profileArticleCurrentPage]
                     };
                 }
             }

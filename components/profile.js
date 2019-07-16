@@ -116,6 +116,37 @@ const renderTabs = (tabs = [], selectedTab, doUpdateProfileSelectedTab) => {
     );
 };
 
+const renderPagination = (numberOfPages = [], currentPage = 0, doUpdateProfileCurrentPage) => {
+    const handler = (evt) => {
+        evt.preventDefault();
+
+        if (evt.target && evt.target.matches("a.page-link")) {
+            doUpdateProfileCurrentPage(currentPage, Number(evt.target.textContent) - 1);
+        }
+    }
+    return (
+        <nav>
+            <ul className="pagination" onClick={handler}>
+                {numberOfPages.map(p => {
+                    const clazz = ["page-item"];
+
+                    if (p === currentPage) {
+                        clazz.push("active");
+                    }
+
+                    return (
+                        <li className={clazz.join(" ")} key={p}>
+                            <a href="#" className="page-link">
+                                {p + 1}
+                            </a>
+                        </li>
+                    );
+                })}
+            </ul>
+        </nav>
+    );
+};
+
 export default connect(
     "selectUserProfile",
     "selectIsCurrentUser",
@@ -123,9 +154,12 @@ export default connect(
     "selectAuthToken",
     "selectProfileSelectedTab",
     "selectProfileTabsAsArray",
+    "selectProfileArticlePages",
+    "selectProfileArticleCurrentPage",
     "doUpdateProfileSelectedTab",
     "doFavoriteProfileArticle",
     "doFollowProfile",
+    "doUpdateProfileCurrentPage",
     ({
         userProfile,
         isCurrentUser,
@@ -133,9 +167,12 @@ export default connect(
         authToken,
         profileSelectedTab,
         profileTabsAsArray,
+        profileArticlePages,
+        profileArticleCurrentPage,
         doUpdateProfileSelectedTab,
         doFavoriteProfileArticle,
-        doFollowProfile
+        doFollowProfile,
+        doUpdateProfileCurrentPage
     }) => {
         if (!userProfile) return <>loading...</>;
 
@@ -177,6 +214,15 @@ export default connect(
                                 profileArticles || [],
                                 authToken,
                                 doFavoriteProfileArticle
+                            )}
+                        </div>
+                    </div>
+                    <div className="row">
+                        <div className="col-xs-12 col-md-10 offset-md-1">
+                            {renderPagination(
+                                profileArticlePages,
+                                profileArticleCurrentPage,
+                                doUpdateProfileCurrentPage
                             )}
                         </div>
                     </div>
