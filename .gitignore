@@ -11,6 +11,7 @@
 .classpath
 *.launch
 .settings/
+.cache/
 
 
 #System Files

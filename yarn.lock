@@ -215,6 +215,11 @@ has-flag@^3.0.0:
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-3.0.0.tgz#b5d454dc2199ae225699f3467e5a07f3b955bafd"
   integrity sha1-tdRU3CGZriJWmfNGfloH87lVuv0=
 
+internal-nav-helper@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/internal-nav-helper/-/internal-nav-helper-3.1.0.tgz#32b7085d0bd9c6ba6b61b84f6ba28c7755f9d176"
+  integrity sha512-05fxcHzJqH2ObzfykSSO/WREvMQJtK+O1jhVKcPev0ovlMnJ5vNv0I0EudJx/iQK93/96hFfjjU2tvNQ1h580g==
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"

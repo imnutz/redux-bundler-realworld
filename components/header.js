@@ -1,5 +1,6 @@
 import * as React from "react";
 import { connect } from "redux-bundler-react";
+import {getNavHelper} from "internal-nav-helper";
 
 const createBrand = appName => (
     <a className="navbar-brand" href="/">
@@ -38,9 +39,10 @@ export default connect(
     "selectNavigation",
     "selectAppName",
     "selectHeaderCurrentPage",
-    ({ navigation, appName, headerCurrentPage }) => {
+    "doUpdateUrl",
+    ({ navigation, appName, headerCurrentPage, doUpdateUrl }) => {
         return (
-            <nav className="navbar navbar-light">
+            <nav className="navbar navbar-light" onClick={getNavHelper(doUpdateUrl)}>
                 <div className="container">
                     {createBrand(appName)}
                     {createNav(navigation, headerCurrentPage)}
