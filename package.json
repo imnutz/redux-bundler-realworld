@@ -5,6 +5,10 @@
   "repository": "git@github.com:gothinkster/realworld-starter-kit.git",
   "author": "sondo <son.do@gooddata.com>",
   "license": "MIT",
+  "scripts": {
+    "deploy": "gh-pages -d dist -o rbrealworld",
+    "gh-help": "gh-pages --help"
+  },
   "dependencies": {
     "dayjs": "^1.8.15",
     "lodash": "^4.17.13",
@@ -16,6 +20,7 @@
   "devDependencies": {
     "@babel/core": "^7.5.0",
     "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "gh-pages": "^2.0.1",
     "internal-nav-helper": "^3.1.0"
   }
 }

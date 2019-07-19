@@ -50,15 +50,9 @@ export default {
                     loading: false
                 };
             } else if (type === SIGNOUT_SUCCEEDED) {
-                return {
-                    ...state,
-                    token: null,
-                    username: null,
-                    email: null,
-                    image: null,
-                    bio: null
-                };
+                return initialState;
             }
+
             return state;
         };
     },
@@ -71,10 +65,9 @@ export default {
 
     doSignOut: () => ({ dispatch, store }) => {
         removeItem(TOKEN_KEY);
-
         dispatch({ type: SIGNOUT_SUCCEEDED });
 
-        store.doUpdateUrl("/");
+        window.location = "/";
     },
 
     doFetchCurrentUser: token => ({ dispatch, apiEndpoint, fetchWrapper }) => {

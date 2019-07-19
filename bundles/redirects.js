@@ -2,7 +2,7 @@ import { createSelector } from "redux-bundler";
 
 const authUrls = ["/signin", "/signup"];
 
-const otherUrls = [...authUrls, "/article"];
+const otherUrls = [...authUrls, "/article", "/profile", "/settings"];
 
 const oneOf = (urls, pathname) => {
     return urls.some(url => pathname.startsWith(url));
@@ -15,11 +15,14 @@ export default {
         "selectIsSignedIn",
         "selectPathname",
         (isSignedIn, pathname) => {
-            if (isSignedIn && oneOf(authUrls, pathname)) {
+            if (
+                isSignedIn &&
+                (pathname === "/signin" || pathname === "/signup")
+            ) {
                 return { actionCreator: "doUpdateUrl", args: ["/"] };
             }
 
-            if (!isSignedIn && !oneOf(otherUrls, pathname) && pathname !== "/") {
+            if (!isSignedIn && pathname.startsWith("/settings")) {
                 return { actionCreator: "doUpdateUrl", args: ["/signin"] };
             }
         }
