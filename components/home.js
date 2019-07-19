@@ -125,14 +125,21 @@ const renderTagsList = (tags = [], doSelectTag) => {
     );
 };
 
-const renderPages = (numberOfPages = [], currentPage = 0, doUpdateCurrentPage) => {
-    const handler = (evt) => {
+const renderPages = (
+    numberOfPages = [],
+    currentPage = 0,
+    doUpdateCurrentPage
+) => {
+    const handler = evt => {
         evt.preventDefault();
 
         if (evt.target && evt.target.matches("a.page-link")) {
-            doUpdateCurrentPage(currentPage, Number(evt.target.textContent) - 1);
+            doUpdateCurrentPage(
+                currentPage,
+                Number(evt.target.textContent) - 1
+            );
         }
-    }
+    };
     return (
         <nav>
             <ul className="pagination" onClick={handler}>
@@ -145,7 +152,9 @@ const renderPages = (numberOfPages = [], currentPage = 0, doUpdateCurrentPage) =
 
                     return (
                         <li className={clazz.join(" ")} key={p}>
-                            <a href="#" className="page-link">{p + 1}</a>
+                            <a href="#" className="page-link">
+                                {p + 1}
+                            </a>
                         </li>
                     );
                 })}
@@ -204,7 +213,11 @@ export default connect(
                                       doFavoriteHomeArticle
                                   )}
 
-                            {renderPages(pages, currentPage, doUpdateCurrentPage)}
+                            {renderPages(
+                                pages,
+                                currentPage,
+                                doUpdateCurrentPage
+                            )}
                         </div>
 
                         <div className="col-md-3">

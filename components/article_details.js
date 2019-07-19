@@ -120,7 +120,10 @@ const renderComments = (
                         />
                     </a>
                     &nbsp;
-                    <a href="" className="comment-author">
+                    <a
+                        href={`/profile/${comment.author.username}`}
+                        className="comment-author"
+                    >
                         {comment.author.username}
                     </a>
                     <span className="date-posted">
@@ -228,11 +231,11 @@ export default connect(
                         <h1>{articleDetails.title}</h1>
 
                         <div className="article-meta">
-                            <a href="">
+                            <a href={`/profile/${articleDetails.author.username}`}>
                                 <img src={articleDetails.author.image} />
                             </a>
                             <div className="info">
-                                <a href="" className="author">
+                                <a href={`/profile/${articleDetails.author.username}`} className="author">
                                     {articleDetails.author.username}
                                 </a>
                                 <span className="date">
@@ -267,11 +270,11 @@ export default connect(
 
                     <div className="article-actions">
                         <div className="article-meta">
-                            <a href="">
+                            <a href={`/profile/${articleDetails.author.username}`}>
                                 <img src={articleDetails.author.image} />
                             </a>
                             <div className="info">
-                                <a href="" className="author">
+                                <a href={`/profile/${articleDetails.author.username}`} className="author">
                                     {articleDetails.author.username}
                                 </a>
                                 <span className="date">

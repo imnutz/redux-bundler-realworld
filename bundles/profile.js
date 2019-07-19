@@ -1,6 +1,7 @@
 import { createSelector } from "redux-bundler";
 
 import getAction from "../actions";
+import { create } from "domain";
 
 const REG = /^\/profile/i;
 
@@ -31,6 +32,7 @@ const PROFILE_UPDATE_FOLLOWING_STATS = getAction(
 );
 
 const PROFILE_UPDATE_CURRENT_PAGE = getAction("PROFILE_UPDATE_CURRENT_PAGE");
+const PROFILE_PROFILE_CHANGED = getAction("PROFILE_PROFILE_CHANGED");
 
 const ITEMS_PER_PAGE = 5;
 
@@ -100,6 +102,11 @@ export default {
                 return {
                     ...state,
                     profile: payload,
+                    articles: null,
+                    articlesCount: 0,
+                    fetchingMore: false,
+                    currentPage: 0,
+                    selectedTab: "my_articles",
                     fetchingProfile: false
                 };
             } else if (type === PROFILE_FETCH_PROFILE_FAILED) {
@@ -149,6 +156,8 @@ export default {
                 }
 
                 return result;
+            } else if (type === PROFILE_PROFILE_CHANGED) {
+                return initialState;
             }
 
             return state;
@@ -165,7 +174,42 @@ export default {
     selectIsFetchingProfile: state => state.profile.fetchingProfile,
     selectProfileArticlesCount: state => state.profile.articlesCount,
     selectProfileArticleCurrentPage: state => state.profile.currentPage,
-    selectIsFetchingMoreProfileArticles: state => state.profile.fetchingMore,
+    selectShouldFetchMoreProfileArticles: state => state.profile.fetchingMore,
+
+    selectIsProfileChanged: createSelector(
+        "selectUserProfile",
+        "selectRouteParams",
+        (profile, route) => {
+            const username = decodeURIComponent(route.username);
+
+            return profile && profile.username !== username;
+        }
+    ),
+
+    selectShouldGetProfile: createSelector(
+        "selectUserProfile",
+        "selectIsProfileChanged",
+        "selectIsProfilePage",
+        (profile, profileChanged, profilePage) => {
+            if ((!profile || profileChanged) && profilePage) {
+                return true;
+            }
+
+            return false;
+        }
+    ),
+
+    selectShouldGetArticles: createSelector(
+        "selectUserProfile",
+        "selectProfileArticles",
+        "selectShouldFetchMoreProfileArticles",
+        "selectIsFetchingProfileArticles",
+        (userProfile, articles, fetchMore, isFetching) => {
+            if (!userProfile) return false;
+
+            return (!articles || fetchMore) && !isFetching;
+        }
+    ),
 
     selectIsProfilePage: createSelector(
         "selectRouteParams",
@@ -188,14 +232,6 @@ export default {
             );
 
             return [...Array(pages).keys()];
-        }
-    ),
-
-    selectProfileUsername: createSelector(
-        "selectRouteParams",
-        "selectIsProfilePage",
-        (routeParams, isProfilePage) => {
-            return isProfilePage && routeParams.username;
         }
     ),
 
@@ -309,68 +345,57 @@ export default {
         });
     },
 
-    reactShouldFetchArticles: createSelector(
-        "selectIsProfilePage",
-        "selectProfileArticles",
-        "selectIsFetchingProfileArticles",
-        "selectProfileSelectedTab",
-        "selectProfileTabs",
+    reactFetchArticles: createSelector(
+        "selectShouldGetArticles",
         "selectAuthToken",
         "selectRouteParams",
-        "selectIsFetchingMoreProfileArticles",
+        "selectProfileSelectedTab",
+        "selectProfileTabs",
         "selectProfileArticleCurrentPage",
         (
-            isProfilePage,
-            profileArticles,
-            isFetchingProfileArticles,
-            profileSelectedTab,
-            profileTabs,
+            shouldGetArticles,
             authToken,
             routeParams,
-            isFetchingMoreProfileArticles,
-            profileArticleCurrentPage
+            selectedTab,
+            tabs,
+            pageNum
         ) => {
-            if (
-                (isProfilePage &&
-                    !profileArticles &&
-                    !isFetchingProfileArticles) ||
-                (isFetchingMoreProfileArticles &&
-                    isProfilePage &&
-                    !isFetchingProfileArticles)
-            ) {
-                const { username } = routeParams;
+            const { username } = routeParams;
 
-                if (profileSelectedTab === profileTabs.myArticles.id) {
+            if (shouldGetArticles) {
+                if (selectedTab === tabs.myArticles.id) {
                     return {
                         actionCreator: "doFetchMyArticles",
-                        args: [username, authToken, profileArticleCurrentPage]
+                        args: [username, authToken, pageNum]
                     };
                 } else {
                     return {
                         actionCreator: "doFetchFavoritedArticles",
-                        args: [username, authToken, profileArticleCurrentPage]
+                        args: [username, authToken, pageNum]
                     };
                 }
             }
         }
     ),
 
-    reactShouldFetchUserProfile: createSelector(
+    reactFetchUserProfile: createSelector(
+        "selectIsProfileChanged",
+        "selectShouldGetProfile",
         "selectRouteParams",
-        "selectIsProfilePage",
-        "selectUserProfile",
         "selectIsFetchingProfile",
         "selectAuthToken",
         (
+            profileChanged,
+            shouldGetProfile,
             routeParams,
-            isProfilePage,
-            userProfile,
             isFetchingProfile,
             authToken
         ) => {
-            if (isProfilePage && !userProfile && !isFetchingProfile) {
-                const { username } = routeParams;
+            const { username } = routeParams;
 
+            if (profileChanged) {
+                return { type: PROFILE_PROFILE_CHANGED };
+            } else if (shouldGetProfile && !isFetchingProfile) {
                 return {
                     actionCreator: "doFetchUserProfile",
                     args: [username, authToken]

@@ -23,6 +23,9 @@ const UPDATE_USER_COMMENT = getAction("UPDATE_USER_COMMENT");
 const POST_COMMENT_SUCCEEDED = getAction("POST_COMMENT_SUCCEEDED");
 const POST_COMMENT_FAILED = getAction("POST_COMMENT_FAILED");
 const DELETE_COMMENT_SUCCEEDED = getAction("DELETE_COMMENT_SUCCEEDED");
+const ARTICLE_SLUG_CHANGED = getAction("ARTICLE_SLUG_CHANGED");
+
+const REG = /^\/article/i;
 
 export default {
     name: "article",
@@ -114,6 +117,8 @@ export default {
                     ...state,
                     comments: currentComments
                 };
+            } else if (type === ARTICLE_SLUG_CHANGED) {
+                return initialState;
             }
 
             return state;
@@ -292,27 +297,42 @@ export default {
     selectIsFetchingArticleDetails: state => state.article.loading,
     selectIsFetchingComments: state => state.article.fetchingComments,
 
-    reactShouldFetchArticle: createSelector(
-        "selectRouteParams",
-        "selectPathname",
+    selectIsSlugChanged: createSelector(
         "selectArticleDetails",
+        "selectRouteParams",
+        (article, route) => {
+            const slug = route.slug || "";
+
+            return article && article.slug !== slug;
+        }
+    ),
+
+    selectIsArticleDetailsPage: createSelector(
+        "selectPathname",
+        pathname => REG.test(pathname)
+    ),
+
+    selectShouldGetArticle: createSelector(
+        "selectArticleDetails",
+        "selectIsSlugChanged",
         "selectIsFetchingArticleDetails",
+        "selectIsArticleDetailsPage",
+        (article, slugChanged, isFetching, articlePage) => {
+            return articlePage && (!article || slugChanged) && !isFetching;
+        }
+    ),
+
+    reactFetchArticle: createSelector(
+        "selectShouldGetArticle",
+        "selectIsSlugChanged",
+        "selectRouteParams",
         "selectAuthToken",
-        (
-            routeParams,
-            pathname,
-            articleDetails,
-            isFetchingArticleDetails,
-            authToken
-        ) => {
+        (shouldGetArticle, slugChanged, routeParams, authToken) => {
             const { slug } = routeParams;
 
-            if (
-                !isFetchingArticleDetails &&
-                !articleDetails &&
-                slug &&
-                /^\/article/i.test(pathname)
-            ) {
+            if (slugChanged) {
+                return { type: ARTICLE_SLUG_CHANGED };
+            } else if (shouldGetArticle) {
                 return {
                     actionCreator: "doFetchArticle",
                     args: [slug, authToken]
@@ -322,26 +342,25 @@ export default {
     ),
 
     reactShouldFetchComments: createSelector(
+        "selectArticleDetails",
         "selectArticleComments",
         "selectIsFetchingComments",
         "selectAuthToken",
         "selectRouteParams",
-        "selectPathname",
+        "selectIsArticleDetailsPage",
         (
+            article,
             articleComments,
             isFetchingComments,
             authToken,
             routeParams,
-            pathname
+            articlePage
         ) => {
+            if (!article) return false;
+
             const { slug } = routeParams;
 
-            if (
-                !isFetchingComments &&
-                !articleComments &&
-                slug &&
-                /^\/article/i.test(pathname)
-            ) {
+            if (!isFetchingComments && !articleComments && articlePage) {
                 return {
                     actionCreator: "doFetchComments",
                     args: [slug, authToken]

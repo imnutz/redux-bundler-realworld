@@ -6,13 +6,11 @@ import debounce from "lodash/fp/debounce";
 const DEBOUNCE_TIME = 300;
 
 export default connect(
-    "selectSigninEmail",
     "selectHasSigninValues",
     "doUpdateSigninEmail",
     "doUpdateSigninPassword",
     "doSignIn",
     ({
-        signinEmail,
         hasSigninValues,
         doUpdateSigninEmail,
         doUpdateSigninPassword,

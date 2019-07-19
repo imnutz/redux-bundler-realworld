@@ -50,15 +50,17 @@ const renderArticleTags = (tags = []) => {
 
 const renderArticles = (articles = [], token, doFavoriteProfileArticle) => {
     return articles.map(article => {
+        const username = article.author.username;
+
         return (
             <div className="article-preview" key={article.slug}>
                 <div className="article-meta">
-                    <a href="profile.html">
+                    <a href={`/profile/${username}`}>
                         <img src={article.author.image} alt="" />
                     </a>
                     <div className="info">
-                        <a href="" className="author">
-                            {article.author.username}
+                        <a href={`/profile/${username}`} className="author">
+                            {username}
                         </a>
                         <span className="date">{article.createAt}</span>
                     </div>
@@ -184,7 +186,9 @@ export default connect(
             return (
                 <div className="container">
                     <div className="row">
-                        <div className="col-xs-12 col-md-10 offset-md-1">loading...</div>
+                        <div className="col-xs-12 col-md-10 offset-md-1">
+                            loading...
+                        </div>
                     </div>
                 </div>
             );

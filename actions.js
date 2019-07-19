@@ -88,7 +88,10 @@ const actions = [
     "PROFILE_UPDATE_SELECTED_TAB",
     "PROFILE_UPDATE_FAVORITE_STATS",
     "PROFILE_UPDATE_FOLLOWING_STATS",
-    "PROFILE_UPDATE_CURRENT_PAGE"
+    "PROFILE_UPDATE_CURRENT_PAGE",
+    "PROFILE_PROFILE_CHANGED",
+
+    "ARTICLE_SLUG_CHANGED"
 ];
 
 const actionsObj = actions.reduce((acc, current) => {

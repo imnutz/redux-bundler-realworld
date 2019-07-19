@@ -13,10 +13,17 @@ const getErrorMessages = (hasError, errorDetails) => {
         <ul className="error-messages">
             {errorDetails ? (
                 Object.keys(errorDetails).map(key => {
-                    return <li key={key}>{key}: {errorDetails[key]}</li>;
+                    return (
+                        <li key={key}>
+                            {key}: {errorDetails[key]}
+                        </li>
+                    );
                 })
             ) : (
-                <li>The registration cannot be completed at the moment. Plz try again later!</li>
+                <li>
+                    The registration cannot be completed at the moment. Plz try
+                    again later!
+                </li>
             )}
         </ul>
     );
@@ -41,7 +48,10 @@ export default connect(
     }) => {
         const debouncedUpdateName = debounce(DEBOUNCE_TIME, doUpdateName);
         const debouncedUpdateEmail = debounce(DEBOUNCE_TIME, doUpdateEmail);
-        const debouncedUpdatePassword = debounce(DEBOUNCE_TIME, doUpdatePassword);
+        const debouncedUpdatePassword = debounce(
+            DEBOUNCE_TIME,
+            doUpdatePassword
+        );
 
         return (
             <div className="auth-page">
